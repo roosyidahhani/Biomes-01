@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laporan Aktivitas Kelompok</title>
+    <!-- Mengimpor Font Fredoka dari Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@300..700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Fredoka', sans-serif;
+            /* Memperbaiki URL Background agar langsung merujuk ke file gambar */
+            background-image: linear-gradient(rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.7)), 
+                              url('https://lh3.googleusercontent.com/d/1U7CdAFrCQlzGZLS6ZeBjQWH_QwbQDsqU');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            min-height: 100vh;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            border-radius: 24px;
+            box-shadow: 0 10px 40px 0 rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        .nav-btn {
+            transition: all 0.3s ease;
+        }
+        .active-tab {
+            background-color: #3b82f6;
+            color: white;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+        }
+    </style>
+</head>
+<body class="p-4 md:p-10">
+
+    <div class="max-w-4xl mx-auto">
+        
+        <!-- RUANG UNTUK JUDUL (DIBERIKAN JARAK ATAS) -->
+        <div class="pt-20 pb-12 text-center">
+            <!-- Anda bisa menambahkan tag <h1> di sini nanti -->
+        </div>
+
+        <!-- Switcher Tampilan -->
+        <div class="flex justify-center mb-8">
+            <div class="bg-white/50 p-1 rounded-full flex gap-2 backdrop-blur-sm border border-white/50 shadow-sm">
+                <button id="btnSiswa" onclick="switchView('siswa')" class="nav-btn px-6 py-2 rounded-full font-medium active-tab">
+                    Tampilan Siswa
+                </button>
+                <button id="btnGuru" onclick="switchView('guru')" class="nav-btn px-6 py-2 rounded-full font-medium text-gray-600 hover:bg-white/80">
+                    Tampilan Guru
+                </button>
+            </div>
+        </div>
+
+        <!-- AREA SISWA -->
+        <div id="viewSiswa" class="space-y-6">
+            <div class="glass-card p-8">
+                <div class="space-y-6">
+                    <div>
+                        <label class="block text-blue-600 font-bold text-lg mb-2">Nama Kelompok</label>
+                        <input type="text" id="inputNama" class="w-full p-4 border-2 border-blue-100 rounded-xl focus:border-blue-400 focus:outline-none" placeholder="Masukkan nama kelompok Anda...">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-blue-600 font-bold text-lg mb-2">Aktivitas</label>
+                        <p class="text-gray-500 text-sm mb-2">Apa yang sudah dikerjakan?</p>
+                        <textarea id="inputAktivitas" class="w-full p-4 border-2 border-blue-100 rounded-xl focus:border-blue-400 focus:outline-none" rows="4" placeholder="Tuliskan detail pekerjaan..."></textarea>
+                    </div>
+
+                    <div>
+                        <label class="block text-red-500 font-bold text-lg mb-2">Kendala</label>
+                        <p class="text-gray-500 text-sm mb-2">Adakah masalah yang dihadapi?</p>
+                        <textarea id="inputKendala" class="w-full p-4 border-2 border-red-100 rounded-xl focus:border-red-400 focus:outline-none" rows="4" placeholder="Tuliskan kendala yang dialami..."></textarea>
+                    </div>
+
+                    <button onclick="simpanData()" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-4 rounded-xl transition-all shadow-lg active:scale-95">
+                        Simpan Laporan
+                    </button>
+                    <p id="saveStatus" class="text-center text-green-600 font-medium hidden">Data telah tersimpan secara lokal!</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- AREA GURU -->
+        <div id="viewGuru" class="hidden space-y-6">
+            <div class="glass-card p-8 min-h-[400px]">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6 border-b pb-4">Daftar Laporan Masuk</h2>
+                
+                <div id="displayArea" class="space-y-6">
+                    <!-- Data akan muncul di sini -->
+                    <div class="text-center py-20 text-gray-400 italic">
+                        Belum ada data yang diinput oleh siswa.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let dataLaporan = {
+            nama: "",
+            aktivitas: "",
+            kendala: ""
+        };
+
+        function switchView(view) {
+            const btnSiswa = document.getElementById('btnSiswa');
+            const btnGuru = document.getElementById('btnGuru');
+            const viewSiswa = document.getElementById('viewSiswa');
+            const viewGuru = document.getElementById('viewGuru');
+
+            if (view === 'siswa') {
+                viewSiswa.classList.remove('hidden');
+                viewGuru.classList.add('hidden');
+                btnSiswa.classList.add('active-tab');
+                btnGuru.classList.remove('active-tab');
+            } else {
+                viewSiswa.classList.add('hidden');
+                viewGuru.classList.remove('hidden');
+                btnGuru.classList.add('active-tab');
+                btnSiswa.classList.remove('active-tab');
+                renderGuruView();
+            }
+        }
+
+        function simpanData() {
+            dataLaporan.nama = document.getElementById('inputNama').value;
+            dataLaporan.aktivitas = document.getElementById('inputAktivitas').value;
+            dataLaporan.kendala = document.getElementById('inputKendala').value;
+
+            const status = document.getElementById('saveStatus');
+            status.classList.remove('hidden');
+            setTimeout(() => status.classList.add('hidden'), 3000);
+        }
+
+        function renderGuruView() {
+            const displayArea = document.getElementById('displayArea');
+            
+            if (!dataLaporan.nama && !dataLaporan.aktivitas && !dataLaporan.kendala) {
+                displayArea.innerHTML = `<div class="text-center py-20 text-gray-400 italic">Belum ada data yang diinput oleh siswa.</div>`;
+                return;
+            }
+
+            displayArea.innerHTML = `
+                <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+                    <div class="mb-4">
+                        <span class="text-xs font-bold uppercase tracking-wider text-blue-500">Nama Kelompok</span>
+                        <p class="text-xl font-semibold text-gray-800">${dataLaporan.nama || '-'}</p>
+                    </div>
+                    
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div class="p-4 bg-blue-50 rounded-xl border border-blue-100">
+                            <span class="text-xs font-bold uppercase tracking-wider text-blue-600">Aktivitas</span>
+                            <p class="text-gray-700 mt-2 whitespace-pre-line">${dataLaporan.aktivitas || '-'}</p>
+                        </div>
+                        
+                        <div class="p-4 bg-red-50 rounded-xl border border-red-100">
+                            <span class="text-xs font-bold uppercase tracking-wider text-red-600">Kendala</span>
+                            <p class="text-gray-700 mt-2 whitespace-pre-line">${dataLaporan.kendala || '-'}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>

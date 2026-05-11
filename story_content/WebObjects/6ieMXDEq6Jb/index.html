@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Latihan - Ekosistem</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Menggunakan Fredoka sebagai alternatif yang sangat mirip dengan gaya 'Comfy Feelings' (bulat dan ramah) -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Fredoka', sans-serif;
+            background-image: url('https://lh3.googleusercontent.com/d/1U7CdAFrCQlzGZLS6ZeBjQWH_QwbQDsqU');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            min-height: 100vh;
+            margin: 0;
+            overflow-x: hidden;
+            font-size: 1.1rem; /* Memperbesar ukuran dasar font */
+        }
+
+        /* Overlay untuk memastikan teks terbaca */
+        .page-overlay {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(2px);
+            min-height: 100vh;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2rem;
+        }
+
+        .gate-frame {
+            position: relative;
+            width: 140px; /* Ukuran gerbang diperbesar */
+            height: 190px;
+            background: rgba(0, 0, 0, 0.4); 
+            border-radius: 70px 70px 0 0;
+            border: 6px solid #064e3b;
+            cursor: pointer;
+            perspective: 1000px;
+        }
+
+        .gate {
+            position: relative;
+            width: 140px;
+            height: 190px;
+            background: #795548; /* Warna Kayu lebih hangat */
+            border: 5px solid #4e342e;
+            border-radius: 65px 65px 0 0; 
+            transition: transform 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-origin: left;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2;
+        }
+
+        .gate::before {
+            content: '';
+            position: absolute;
+            width: 3px;
+            height: 100%;
+            background: rgba(0,0,0,0.15);
+            left: 50%;
+        }
+
+        .gate.open {
+            transform: rotateY(-120deg);
+        }
+
+        .gate.locked {
+            filter: grayscale(0.8) brightness(0.6);
+            cursor: not-allowed;
+        }
+
+        .gate-icon {
+            font-size: 3.5rem; /* Icon nomor diperbesar */
+            color: #ffeb3b;
+            text-shadow: 2px 2px 8px rgba(0,0,0,0.6);
+            z-index: 10;
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); } /* Ayunan melayang lebih tinggi */
+            100% { transform: translateY(0px); }
+        }
+
+        .floating {
+            animation: float 5s ease-in-out infinite;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(15px);
+            border: 2px solid rgba(255, 255, 255, 0.5);
+        }
+
+        /* Tombol Jawaban */
+        .answer-btn {
+            font-size: 1.25rem; /* Teks pilihan diperbesar */
+            padding: 1.5rem !important;
+        }
+
+        .level-tag {
+            font-size: 1.1rem;
+            padding: 0.5rem 1.5rem;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 99px;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="page-overlay">
+        <header class="text-center my-12 bg-white/80 px-16 py-8 rounded-[3rem] backdrop-blur-lg border-2 border-white shadow-2xl">
+            <h1 class="text-7xl font-bold text-emerald-900 tracking-tight">LATIHAN</h1>
+            <p class="text-emerald-700 font-medium uppercase text-lg tracking-[0.4em] mt-3">Ekosistem Alam</p>
+        </header>
+
+        <div id="gate-map" class="grid grid-cols-1 md:grid-cols-5 gap-16 max-w-7xl w-full justify-items-center mt-12 px-8">
+            <!-- Gerbang akan di-render di sini -->
+        </div>
+    </div>
+
+    <!-- Modal Soal -->
+    <div id="quiz-modal" class="fixed inset-0 bg-emerald-950/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-6">
+        <div class="glass-card rounded-[4rem] max-w-4xl w-full max-h-[90vh] overflow-y-auto p-10 md:p-16 shadow-2xl relative border-t-[16px] border-emerald-500">
+            <button onclick="closeModal()" class="absolute top-8 right-10 text-gray-400 hover:text-emerald-600 text-5xl font-bold transition-colors">&times;</button>
+            
+            <div id="quiz-content">
+                <!-- Konten Soal -->
+            </div>
+
+            <div id="feedback-section" class="mt-12 p-8 rounded-[3rem] hidden transition-all">
+                <div id="feedback-msg" class="font-bold text-3xl mb-4"></div>
+                <div id="explanation" class="text-gray-700 text-lg leading-relaxed bg-white/70 p-8 rounded-[2rem] border-l-8 border-emerald-500 shadow-inner italic"></div>
+                <button id="next-btn" onclick="handleNextStep()" class="mt-10 w-full bg-emerald-700 hover:bg-emerald-800 text-white font-bold py-6 rounded-[2rem] shadow-2xl transition-all active:scale-95 text-2xl">
+                    Lanjut Perjalanan ➔
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Screen Selesai -->
+    <div id="finish-screen" class="fixed inset-0 bg-emerald-950/98 z-[60] hidden flex flex-col items-center justify-center text-center p-8 backdrop-blur-2xl">
+        <div class="bg-white p-20 rounded-[5rem] shadow-2xl max-w-2xl border-[15px] border-emerald-100 relative">
+            <div class="text-9xl mb-8">🌳</div>
+            <h2 class="text-6xl font-bold text-emerald-900 mb-5">Hebat Sekali!</h2>
+            <p class="text-gray-600 mb-12 leading-relaxed text-2xl font-medium">Kamu telah membuka semua gerbang ilmu pengetahuan. Teruslah menjaga alam kita!</p>
+            <button onclick="location.reload()" class="bg-emerald-600 text-white px-16 py-7 rounded-full font-bold text-2xl hover:bg-emerald-700 hover:shadow-2xl transition-all hover:scale-110">Mulai Dari Awal</button>
+        </div>
+    </div>
+
+    <script>
+        const quizData = [
+            {
+                id: 1,
+                type: 'single',
+                question: "Sebuah waduk yang sebelumnya bersih kini dipenuhi oleh tumbuhan air seperti ganggang hijau yang tumbuh sangat cepat. Air menjadi keruh dan berbau, serta banyak ikan ditemukan mati di permukaan. Penyebab utama pertumbuhan ganggang yang berlebihan tersebut adalah...",
+                options: [
+                    "Berkurangnya jumlah sinar matahari yang masuk ke waduk.",
+                    "Meningkatnya kandungan nutrisi dari limbah rumah tangga dan pertanian.",
+                    "Bertambahnya jumlah ikan predator di dalam waduk.",
+                    "Menurunnya kadar oksigen akibat suhu air yang dingin."
+                ],
+                answer: 1, 
+                explanation: "Ini adalah Eutrofikasi. Nutrisi berlebih membuat alga tumbuh liar, saat mati pembusukannya menghabiskan oksigen dalam air."
+            },
+            {
+                id: 2,
+                type: 'single',
+                question: "Sebuah gunung berapi mengalami letusan besar yang menyebabkan abu vulkanik menutupi area hutan di sekitarnya. Daun-daun tertutup debu tebal dan sinar matahari sulit mencapai permukaan tanah selama beberapa hari. Dampak yang paling mungkin terjadi terhadap rantai makanan di hutan tersebut adalah...",
+                options: [
+                    "Tumbuhan tidak dapat melakukan fotosintesis sehingga produsen akan berkurang.",
+                    "Hewan herbivora akan langsung berubah menjadi karnivora untuk bertahan hidup.",
+                    "Populasi tumbuhan akan meningkat karena adanya abu vulkanik sebagai pupuk instan.",
+                    "Semua hewan akan berpindah ke daerah laut untuk mencari makanan."
+                ],
+                answer: 0,
+                explanation: "Tanpa cahaya, fotosintesis terhenti. Jika produsen (tumbuhan) mati, seluruh rantai makanan di atasnya kehilangan sumber energi."
+            },
+            {
+                id: 3,
+                type: 'single',
+                question: "Di suatu daerah, terjadi pembukaan lahan besar-besaran dengan cara menebang hutan dan mengeruk sungai untuk diambil pasirnya. Lingkungan menjadi gersang dan kualitas air menurun. Dampak yang paling mungkin terjadi terhadap keseimbangan rantai makanan adalah...",
+                options: [
+                    "Jumlah pengurai meningkat karena banyak limbah anorganik.",
+                    "Konsumen tingkat atas akan beralih memakan batu dan pasir.",
+                    "Populasi produsen menurun sehingga aliran energi ke konsumen terganggu.",
+                    "Rantai makanan menjadi stabil karena tidak ada gangguan dari manusia."
+                ],
+                answer: 2,
+                explanation: "Hutan adalah sumber produsen utama. Menghilangnya produsen memutus aliran energi ke tingkat konsumen berikutnya."
+            },
+            {
+                id: 4,
+                type: 'multiple',
+                question: "Petani menggunakan pestisida untuk melindungi tanaman dari hama. Namun, penggunaan pestisida yang berlebihan dapat memberikan dampak terhadap ekosistem. Manakah pernyataan yang benar terkait dampak tersebut? (Pilih lebih dari satu)",
+                options: [
+                    "Racun dapat terakumulasi pada hewan pemangsa tingkat atas melalui rantai makanan.",
+                    "Pestisida membuat tanaman menghasilkan energi lebih banyak untuk herbivora.",
+                    "Bahan kimia dapat mencemari air dan memengaruhi organisme lain di sawah."
+                ],
+                answer: [0, 2],
+                explanation: "Pestisida menyebabkan bioakumulasi racun di predator puncak dan polusi air bagi makhluk lain di sekitarnya."
+            },
+            {
+                id: 5,
+                type: 'single',
+                question: "Di sebuah savana, populasi singa dan ular berkurang drastis akibat perburuan liar. Akibatnya, jumlah hewan pemakan tumbuhan dan hewan kecil meningkat tajam. Langkah paling tepat untuk mengembalikan keseimbangan ekosistem adalah...",
+                options: [
+                    "Melindungi dan meningkatkan populasi predator agar rantai makanan kembali seimbang.",
+                    "Mengurangi jumlah tumbuhan agar hewan herbivora tidak berkembang pesat.",
+                    "Memindahkan semua herbivora ke wilayah lain agar populasi berkurang.",
+                    "Memberi makan tambahan pada hewan kecil agar tidak mengganggu ekosistem."
+                ],
+                answer: 0,
+                explanation: "Predator puncak mengendalikan jumlah herbivora. Tanpa kontrol predator, herbivora akan menghabiskan vegetasi dan merusak lingkungan."
+            }
+        ];
+
+        let unlockedLevel = 1;
+        let currentLevel = 0;
+
+        function renderGates() {
+            const container = document.getElementById('gate-map');
+            container.innerHTML = '';
+            
+            for (let i = 0; i < 5; i++) {
+                const isLocked = (i + 1) > unlockedLevel;
+                const gateHTML = `
+                    <div class="flex flex-col items-center space-y-8 floating" style="animation-delay: ${i * 0.5}s">
+                        <div class="gate-frame shadow-2xl" onclick="openQuestion(${i})">
+                            <div id="gate-${i}" class="gate ${isLocked ? 'locked' : ''}">
+                                <div class="gate-icon">${isLocked ? '🔒' : (i + 1)}</div>
+                            </div>
+                        </div>
+                        <span class="level-tag text-emerald-900 shadow-xl border border-white/50 uppercase tracking-widest">Level ${i + 1}</span>
+                    </div>
+                `;
+                container.innerHTML += gateHTML;
+            }
+        }
+
+        function openQuestion(index) {
+            if (index + 1 > unlockedLevel) return;
+            
+            currentLevel = index;
+            const questionData = quizData[index];
+            const modal = document.getElementById('quiz-modal');
+            const content = document.getElementById('quiz-content');
+            
+            document.getElementById('feedback-section').classList.add('hidden');
+            
+            let optionsHTML = '';
+            if (questionData.type === 'single') {
+                optionsHTML = questionData.options.map((opt, i) => `
+                    <button onclick="checkAnswer(${i})" class="answer-btn w-full text-left mb-5 border-4 border-emerald-50 rounded-[2.5rem] hover:bg-emerald-600 hover:text-white hover:border-emerald-700 transition-all flex items-center group shadow-md bg-white/90">
+                        <span class="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center mr-6 font-bold text-emerald-800 group-hover:bg-white group-hover:text-emerald-700 text-2xl shadow-inner">${String.fromCharCode(65 + i)}</span>
+                        <span class="flex-1 font-medium text-2xl">${opt}</span>
+                    </button>
+                `).join('');
+            } else {
+                optionsHTML = questionData.options.map((opt, i) => `
+                    <div class="flex items-center p-8 mb-5 border-4 border-emerald-50 rounded-[2.5rem] bg-white/90 shadow-md">
+                        <input type="checkbox" id="opt-${i}" class="w-10 h-10 accent-emerald-600 mr-8 cursor-pointer rounded-xl">
+                        <label for="opt-${i}" class="flex-1 cursor-pointer font-medium text-gray-800 text-2xl">${opt}</label>
+                    </div>
+                `).join('');
+                optionsHTML += `
+                    <button onclick="checkMultipleAnswers()" class="w-full mt-8 bg-emerald-800 text-white font-bold py-7 rounded-[2.5rem] hover:bg-emerald-900 shadow-2xl active:scale-95 transition-all text-3xl">Kirim Jawaban</button>
+                `;
+            }
+
+            content.innerHTML = `
+                <div class="flex items-center justify-between mb-8">
+                    <span class="bg-emerald-100 text-emerald-900 px-6 py-2 rounded-full font-bold text-lg uppercase">Tantangan ${index + 1}</span>
+                    <span class="text-gray-400 font-bold text-lg">${index + 1} / 5</span>
+                </div>
+                <h3 class="text-3xl md:text-4xl font-bold text-gray-800 mb-12 leading-tight">${questionData.question}</h3>
+                <div class="grid gap-2">
+                    ${optionsHTML}
+                </div>
+            `;
+
+            modal.classList.remove('hidden');
+        }
+
+        function checkAnswer(selectedIndex) {
+            const data = quizData[currentLevel];
+            showFeedback(selectedIndex === data.answer);
+        }
+
+        function checkMultipleAnswers() {
+            const data = quizData[currentLevel];
+            const selected = [];
+            data.options.forEach((_, i) => {
+                if (document.getElementById(`opt-${i}`).checked) selected.push(i);
+            });
+            showFeedback(JSON.stringify(selected) === JSON.stringify(data.answer));
+        }
+
+        function showFeedback(isCorrect) {
+            const section = document.getElementById('feedback-section');
+            const msg = document.getElementById('feedback-msg');
+            const explanation = document.getElementById('explanation');
+            const nextBtn = document.getElementById('next-btn');
+
+            section.classList.remove('hidden');
+            section.className = "mt-12 p-10 rounded-[3.5rem] shadow-2xl " + (isCorrect ? "bg-emerald-50 border-4 border-emerald-200" : "bg-red-50 border-4 border-red-200");
+            
+            if (isCorrect) {
+                msg.innerHTML = "✨ Luar Biasa! Kamu Benar";
+                msg.className = "font-bold text-4xl mb-4 text-emerald-700";
+                explanation.textContent = quizData[currentLevel].explanation;
+                nextBtn.textContent = (currentLevel === 4) ? "Buka Gerbang Terakhir! 🏆" : "Buka Gerbang Berikutnya";
+                nextBtn.className = "mt-10 w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-7 rounded-[2rem] shadow-2xl transition-all text-2xl";
+                
+                if (unlockedLevel === currentLevel + 1) unlockedLevel++;
+            } else {
+                msg.innerHTML = "😟 Oh Tidak, Coba Lagi";
+                msg.className = "font-bold text-4xl mb-4 text-red-600";
+                explanation.textContent = "Jangan menyerah! Bacalah soalnya dengan teliti. Ekosistem adalah tentang hubungan timbal balik yang erat.";
+                nextBtn.textContent = "Ulangi Soal Ini";
+                nextBtn.className = "mt-10 w-full bg-red-600 hover:bg-red-700 text-white font-bold py-7 rounded-[2rem] shadow-2xl transition-all text-2xl";
+            }
+            
+            section.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function handleNextStep() {
+            const msg = document.getElementById('feedback-msg').textContent;
+            if (msg.includes("Luar Biasa")) {
+                if (currentLevel === 4) {
+                    document.getElementById('finish-screen').classList.remove('hidden');
+                } else {
+                    closeModal();
+                    document.getElementById(`gate-${currentLevel}`).classList.add('open');
+                    setTimeout(() => renderGates(), 1200);
+                }
+            } else {
+                openQuestion(currentLevel);
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('quiz-modal').classList.add('hidden');
+        }
+
+        window.onload = renderGates;
+    </script>
+</body>
+</html>
